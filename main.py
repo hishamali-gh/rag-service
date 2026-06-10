@@ -38,6 +38,7 @@ async def check_liveness_probe():
 
     return {"status": "healthy", "service": "Pizzeria RAG Service Active"}
 
+
 if __name__ == "__main__":
 
     # Boot server line on port 8005 so it runs independently next to Django (8000)
