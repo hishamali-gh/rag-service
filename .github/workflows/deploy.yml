@@ -1,0 +1,45 @@
+name: Pizzeria RAG Service CI/CD Pipeline
+
+# TRIGGER
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  # INTEGRATION PART
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set Up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Since this is a Python/FastAPI service without a custom unit test framework configured in requirements.txt,
+      # we will run a Python Syntax compilation check as our CI step.
+      # This ensures that you don't accidentally deploy code with basic syntax errors or typos.
+
+      - name: Run Syntax Check
+        run: |
+          python -m py_compile main.py
+
+  # DEPLOYMENT PART
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/pizzeria/rag_service
+            git pull origin main
+            cd ~/pizzeria
+            docker-compose up -d --build rag_service
